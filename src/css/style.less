@@ -144,6 +144,51 @@ main {
   margin: 25px;
 }
 
+.convert-card {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 900px;
+  padding: 28px;
+  text-align: center;
+  width: 100%;
+}
+
+.upload-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.fork-note {
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 720px;
+}
+
+@media (max-width: 768px) {
+  main {
+    margin: 16px;
+  }
+
+  .convert-card {
+    gap: 16px;
+    padding: 18px 12px;
+  }
+
+  .upload-row {
+    gap: 10px;
+  }
+
+  .fork-note {
+    font-size: 13px;
+    max-width: 320px;
+  }
+}
+
 body {
   background-color: #795548 !important;
 }

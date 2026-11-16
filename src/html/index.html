@@ -28,14 +28,15 @@
         </div>
     </header>
     <main>
-        <span>Select&nbsp;</span>
-        <label class="btn green"><input accept=".zip" id="selectInputFileButton" title="Select zip file" type="file">Zip
-            file</label>
-        <label>&nbsp;</label>
-        <label class="btn green"><input id="selectInputFolderButton" title="Select folder" type="file"
-                webkitdirectory>Folder</label>
-        <span>&nbsp;or drag'n'drop</span>
-        <div class="mt-3 small">Fork build: Java 26.3 conversions enabled. Packs containing supported custom block models download as <strong>.mcaddon</strong>; ordinary packs download as <strong>.mcpack</strong>.</div>
+        <div class="convert-card">
+            <div class="upload-row">
+                <span>Select</span>
+                <label class="btn green"><input accept=".zip" id="selectInputFileButton" title="Select zip file" type="file">Zip file</label>
+                <label class="btn green"><input id="selectInputFolderButton" title="Select folder" type="file" webkitdirectory>Folder</label>
+                <span>or drag'n'drop</span>
+            </div>
+            <div class="fork-note">Fork build: Java 26.3 conversions enabled. Packs containing supported custom block models download as <strong>.mcaddon</strong>; ordinary packs download as <strong>.mcpack</strong>.</div>
+        </div>
     </main>
     <footer class="page-footer brown">
         <div class="footer-copyright">
