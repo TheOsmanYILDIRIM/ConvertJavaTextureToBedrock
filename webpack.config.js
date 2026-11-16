@@ -24,8 +24,8 @@ const babelOptions = {
     ]]
 };
 
-//const isDebug = (process.env.NODE_ENV === "development");
-const isDebug = "production";
+const isDebug = false;
+const enableOffline = false;
 
 module.exports = {
     devtool: false,
@@ -140,7 +140,7 @@ module.exports = {
             prefix: "webapp",
             publicPath: "./"
         }),
-        ...(!isDebug ? [new OfflinePlugin({
+        ...(!isDebug && enableOffline ? [new OfflinePlugin({
             ServiceWorker: {
                 events: true
             },
