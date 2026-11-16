@@ -6,6 +6,23 @@ const OfflinePlugin = require("offline-plugin");
 const OptimizeCSSAssetsPlugin = require("optimize-css-assets-webpack-plugin");
 const PACKAGE = require("./package");
 const TerserJSPlugin = require("terser-webpack-plugin");
+const path = require("path");
+
+const babelOptions = {
+    babelrc: false,
+    configFile: false,
+    presets: [[
+        "@babel/preset-env",
+        {
+            modules: false,
+            targets: {
+                chrome: "70",
+                firefox: "68",
+                safari: "12"
+            }
+        }
+    ]]
+};
 
 //const isDebug = (process.env.NODE_ENV === "development");
 const isDebug = "production";
@@ -21,15 +38,32 @@ module.exports = {
     mode: (isDebug ? "development" : "production"),
     module: {
         rules: [{
+                test: /\.m?js$/,
+                include: [
+                    path.resolve(__dirname, "src/js"),
+                    path.resolve(__dirname, "node_modules/@modifiedcommand/convert-minecraft-java-texture-to-bedrock-api")
+                ],
+                exclude: /worker\.js$/,
+                use: {
+                    loader: "babel-loader",
+                    options: babelOptions
+                }
+            },
+            {
                 test: /\.less$/,
                 use: [MiniCssExtractPlugin.loader, "css-loader", "less-loader"]
             },
             {
                 test: /worker\.js$/,
-                loader: "worker-loader",
-                options: {
-                    name: "[name].[contenthash].js"
-                }
+                use: [{
+                    loader: "worker-loader",
+                    options: {
+                        name: "[name].[contenthash].js"
+                    }
+                }, {
+                    loader: "babel-loader",
+                    options: babelOptions
+                }]
             }, {
                 test: /\.(jpe?g|png|gif|svg)$/i,
                 loader: 'file-loader',

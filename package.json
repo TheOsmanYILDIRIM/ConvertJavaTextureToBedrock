@@ -1,7 +1,7 @@
 {
     "name": "@modifiedcommand/convert-minecraft-java-texture-to-bedrock-webapp",
     "productName": "ConvertJavaTextureToBedrockWebApp",
-    "version": "4.4.0-osman.1",
+    "version": "4.4.0-osman.2",
     "description": "Convert a Java Texture Pack to Bedrock Texture Pack",
     "keywords": [
         "Minecraft",
@@ -41,7 +41,10 @@
         "webpack-cli": "3.3.12",
         "worker-loader": "1.1.1",
         "jszip": "3.10.1",
-        "uuid": "3.4.0"
+        "uuid": "3.4.0",
+        "@babel/core": "7.24.7",
+        "@babel/preset-env": "7.24.7",
+        "babel-loader": "8.3.0"
     },
     "resolutions": {
         "sharp": "0.25.3"
