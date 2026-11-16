@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 env:
-  API_REVISION: 6f448b480fe5a32f9402c8669c0296924943f2f9
+  API_REVISION: 791946201b0c42d53e34cb69d687f08050c4858a
 
 concurrency:
   group: web-pages-${{ github.ref }}
@@ -65,6 +65,7 @@ jobs:
           grep -Fq -- "Nonstandard pack.mcmeta" build/worker.*.js
           worker_count="$(find build -maxdepth 1 -name 'worker.*.js' | wc -l)"
           test "$worker_count" -ge 1
+          grep -Fq -- "overlay connection conditions cannot be baked unconditionally" build/worker.*.js
           grep -R -q "Custom Java block models detected" build/worker.*.js
           grep -R -q "j2b_companion/blocks/" build/worker.*.js
           echo "Verified Java 26.3 custom-block browser bundle."
