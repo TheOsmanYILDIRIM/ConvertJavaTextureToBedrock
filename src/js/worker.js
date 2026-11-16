@@ -46,7 +46,7 @@ async function buildAddon(outputFs, files) {
     const behaviorManifest = {
         format_version: 2,
         header: {
-            name: \`\${resourceManifest.header.name || "J2B"} Custom Blocks\`,
+            name: (resourceManifest.header.name || "J2B") + " Custom Blocks",
             description: "Companion behavior pack generated from Java custom block models",
             uuid: behaviorHeaderUuid,
             version: [0, 0, 1],
@@ -101,7 +101,7 @@ addEventListener("message", async e => {
 
             warn(log) {
                 this.warnCount();
-                this.log(\`WARNING: \${log}\`, "yellow");
+                this.log("WARNING: " + log, "yellow");
             }
         }();
 
