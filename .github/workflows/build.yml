@@ -10,7 +10,14 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+
+env:
+  API_REVISION: 5f40535d599fabd085390daebc9a1ad438786a22
+
+concurrency:
+  group: web-pages-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -26,6 +33,22 @@ jobs:
         with:
           node-version: "20"
 
+      - name: Pin the Patrix-compatible converter and label the build
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+          const path = "package.json";
+          const pkg = JSON.parse(fs.readFileSync(path, "utf8"));
+          const name = "@modifiedcommand/convert-minecraft-java-texture-to-bedrock-api";
+          const sha = process.env.API_REVISION;
+          if (!/^[a-f0-9]{40}$/.test(sha) || !pkg.devDependencies[name]) {
+            throw new Error("Missing pinned converter API revision or package");
+          }
+          pkg.devDependencies[name] = "github:TheOsmanYILDIRIM/ConvertJavaTextureToBedrockApi#" + sha;
+          pkg.version = pkg.version.split("+")[0] + "+api." + sha.slice(0, 8);
+          fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + "\n");
+          NODE
+
       - name: Install dependencies
         run: yarn install
 
@@ -38,6 +61,8 @@ jobs:
         run: |
           test -f build/index.html
           grep -q "Java 26.3 conversions enabled" build/index.html
+          grep -Fq -- "+api.${API_REVISION:0:8}" build/index.html
+          grep -Fq -- "Nonstandard pack.mcmeta" build/worker.*.js
           worker_count="$(find build -maxdepth 1 -name 'worker.*.js' | wc -l)"
           test "$worker_count" -ge 1
           grep -R -q "Custom Java block models detected" build/worker.*.js
@@ -51,26 +76,48 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-      - name: Deploy to GitHub Pages
-        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
-        uses: JamesIves/github-pages-deploy-action@v4
+      - name: Upload Pages artifact
+        if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+        uses: actions/upload-pages-artifact@v3
         with:
-          branch: gh-pages
-          folder: build
-          clean: true
+          path: build
 
-      - name: Verify live GitHub Pages
-        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+  deploy:
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to the web app repository's Pages site
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Verify the existing web app URL serves the new worker
         run: |
+          set -euo pipefail
           url="https://theosmanyildirim.github.io/ConvertJavaTextureToBedrock/"
-          for attempt in $(seq 1 15); do
-            code="$(curl -L -sS -o /tmp/pages.html -w '%{http_code}' "$url" || true)"
-            echo "attempt=$attempt http=$code url=$url"
-            if [ "$code" = "200" ] && grep -q "Java 26.3 conversions enabled" /tmp/pages.html; then
-              echo "Live Pages verified with Java 26.3 marker."
-              exit 0
+          expected="+api.${API_REVISION:0:8}"
+          for attempt in {1..18}; do
+            if curl -fsSL --max-time 10 -o /tmp/pages.html "${url}?build=${GITHUB_SHA}&attempt=${attempt}" &&
+               grep -Fq -- "$expected" /tmp/pages.html; then
+              while IFS= read -r entry; do
+                if ! curl -fsSL --max-time 10 -o /tmp/entry.js "${url}${entry}"; then continue; fi
+                while IFS= read -r worker; do
+                  if curl -fsSL --max-time 15 -o /tmp/worker.js "${url}${worker}" &&
+                     grep -Fq -- "Nonstandard pack.mcmeta" /tmp/worker.js; then
+                    echo "Verified $expected and converter worker at $url"
+                    exit 0
+                  fi
+                done < <(grep -oE 'worker\.[a-f0-9]+\.js' /tmp/entry.js | sort -u)
+              done < <(grep -oE 'index\.[a-f0-9]+\.js' /tmp/pages.html | sort -u)
             fi
-            sleep 4
+            sleep 5
           done
-          echo "Live Pages verification failed."
+          echo "::error::Expected revision $expected and converter worker were not served at $url"
           exit 1
