@@ -25,7 +25,7 @@ Please note:
 - Works directly in your browser - no upload required and offline usage
 - Some conversions of HD texture packs may takes a while
 - You need a device with corresponding enough RAM (like the file size and content of the texture pack), because the convert it is not stored in a temporary storage, but in the RAM memory
-- Java 26.3 fork build supports the safe OptiFine/Continuity random block-texture subset and an experimental standard Java custom block-model path. Custom block models are emitted as a Bedrock `.mcaddon` containing a Resource Pack plus a small JSON-only companion Behavior Pack. Conditional multipart models and custom items remain incomplete. Shaders, arbitrary mods/datapacks and fonts are still outside this scope.
+- Java 26.3 fork build includes separate opt-in experimental switches for the safe OptiFine/Continuity random block-texture subset and the standard Java custom block-model path. Both are off by default in the web app. Custom block models emit a Bedrock `.mcaddon` containing a Resource Pack plus a small JSON-only companion Behavior Pack. Conditional multipart models and custom items remain incomplete. Shaders, arbitrary mods/datapacks and fonts are still outside this scope.
 - Snapshots or never versions may are also not supported
 - If textures of sprites (For instance banner pattern, painting and particle) are only partially available, the missing will be transparent
 - Please reopen Minecraft after selecting the converted texture pack, because in the current version it seems to be a bug to reload the texture cache (Otherwise it's possible that you will have a mix between your previous and new texture pack, which can lead to appearance bugs that would not occur)

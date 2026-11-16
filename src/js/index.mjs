@@ -35,11 +35,18 @@ document.addEventListener("DOMContentLoaded", () => {
         selectInputFolderButton.addEventListener("change", startConvert);
     }
 
-    const experimentalSwitch = document.getElementById("experimentalSwitch");
-    experimentalSwitch.checked = (localStorage[experimentalSwitch.id] === "true");
-    experimentalSwitch.addEventListener("change", () => {
-        localStorage[experimentalSwitch.id] = experimentalSwitch.checked;
-    });
+    function bindRememberedSwitch(id) {
+        const input = document.getElementById(id);
+        input.checked = (localStorage[id] === "true");
+        input.addEventListener("change", () => {
+            localStorage[id] = input.checked;
+        });
+        return input;
+    }
+
+    const experimentalSwitch = bindRememberedSwitch("experimentalSwitch");
+    const optifineRandomBlockVariantsSwitch = bindRememberedSwitch("optifineRandomBlockVariantsSwitch");
+    const customBlockModelsSwitch = bindRememberedSwitch("customBlockModelsSwitch");
 
     const main = document.querySelector("main");
     main.addEventListener("dragenter", startConvertDrop);
@@ -125,7 +132,9 @@ document.addEventListener("DOMContentLoaded", () => {
             worker.postMessage({
                 files,
                 options: {
-                    experimental: experimentalSwitch.checked
+                    experimental: experimentalSwitch.checked,
+                    optifineRandomBlockVariants: optifineRandomBlockVariantsSwitch.checked,
+                    customBlockModels: customBlockModelsSwitch.checked
                 }
             });
         } catch (err) {

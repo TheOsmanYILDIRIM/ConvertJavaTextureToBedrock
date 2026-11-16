@@ -35,7 +35,32 @@
                 <label class="btn green"><input id="selectInputFolderButton" title="Select folder" type="file" webkitdirectory>Folder</label>
                 <span>or drag'n'drop</span>
             </div>
-            <div class="fork-note">Fork build: Java 26.3 conversions enabled. Packs containing supported custom block models download as <strong>.mcaddon</strong>; ordinary packs download as <strong>.mcpack</strong>.</div>
+            <div class="fork-note">Fork build: Java 26.3 conversions enabled. Experimental features are off by default and can be enabled before conversion.</div>
+            <div class="mt-3 text-start">
+                <strong>Experimental features</strong>
+                <div class="switch mt-2">
+                    <label>
+                        <input id="experimentalSwitch" type="checkbox">
+                        <span class="lever"></span>
+                        Legacy experimental conversions
+                    </label>
+                </div>
+                <div class="switch mt-2">
+                    <label>
+                        <input id="optifineRandomBlockVariantsSwitch" type="checkbox">
+                        <span class="lever"></span>
+                        OptiFine / Continuity random block texture variants
+                    </label>
+                </div>
+                <div class="switch mt-2">
+                    <label>
+                        <input id="customBlockModelsSwitch" type="checkbox">
+                        <span class="lever"></span>
+                        Java custom block models → Bedrock .mcaddon
+                    </label>
+                </div>
+                <small class="d-block mt-2">These options are remembered in this browser. Custom block models require a companion Behavior Pack and produce a .mcaddon when used.</small>
+            </div>
         </div>
     </main>
     <footer class="page-footer brown">
@@ -43,13 +68,7 @@
             <div class="container">
                 <div class="row justify-content-center">
                     <div class="col-lg-4">
-                        <div class="switch">
-                            <label>
-                                <input id="experimentalSwitch" type="checkbox" checked>
-                                <span class="lever"></span>
-                                Experimental conversions
-                            </label>
-                        </div>
+                        <div>Experimental options are available above before conversion.</div>
                         <br>
                     </div>
                     <div class="col-lg-4">
