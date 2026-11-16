@@ -1,7 +1,7 @@
 {
     "name": "@modifiedcommand/convert-minecraft-java-texture-to-bedrock-webapp",
     "productName": "ConvertJavaTextureToBedrockWebApp",
-    "version": "4.4.0-osman.2",
+    "version": "4.4.0-osman.3",
     "description": "Convert a Java Texture Pack to Bedrock Texture Pack",
     "keywords": [
         "Minecraft",
