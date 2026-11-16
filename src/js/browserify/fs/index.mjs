@@ -1,5 +1,0 @@
-function existsSync() {
-
-}
-
-export {existsSync};
