@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 env:
-  API_REVISION: 791946201b0c42d53e34cb69d687f08050c4858a
+  API_REVISION: 4c1d3c04a05c69478b2bfcb0c7f10298126fdb68
 
 concurrency:
   group: web-pages-${{ github.ref }}
@@ -68,7 +68,9 @@ jobs:
           grep -Fq -- "overlay connection conditions cannot be baked unconditionally" build/worker.*.js
           grep -R -q "Custom Java block models detected" build/worker.*.js
           grep -R -q "j2b_companion/blocks/" build/worker.*.js
-          echo "Verified Java 26.3 custom-block browser bundle."
+          grep -Fq -- "includeMaterialMapsSwitch" build/index.html
+          grep -Fq -- "seam filter retained" build/worker.*.js
+          echo "Verified Java 26.3 browser bundle and CTM material control."
 
       - uses: actions/upload-artifact@v4
         with:

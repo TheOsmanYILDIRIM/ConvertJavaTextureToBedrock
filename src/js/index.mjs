@@ -35,9 +35,9 @@ document.addEventListener("DOMContentLoaded", () => {
         selectInputFolderButton.addEventListener("change", startConvert);
     }
 
-    function bindRememberedSwitch(id) {
+    function bindRememberedSwitch(id, defaultChecked = false) {
         const input = document.getElementById(id);
-        input.checked = (localStorage[id] === "true");
+        input.checked = localStorage[id] === undefined ? defaultChecked : localStorage[id] === "true";
         input.addEventListener("change", () => {
             localStorage[id] = input.checked;
         });
@@ -46,6 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const experimentalSwitch = bindRememberedSwitch("experimentalSwitch");
     const optifineRandomBlockVariantsSwitch = bindRememberedSwitch("optifineRandomBlockVariantsSwitch");
+    const includeMaterialMapsSwitch = bindRememberedSwitch("includeMaterialMapsSwitch", true);
     const customBlockModelsSwitch = bindRememberedSwitch("customBlockModelsSwitch");
 
     const main = document.querySelector("main");
@@ -133,6 +134,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 files,
                 options: {
                     experimental: experimentalSwitch.checked,
+                    includeMaterialMaps: includeMaterialMapsSwitch.checked,
                     optifineRandomBlockVariants: optifineRandomBlockVariantsSwitch.checked,
                     customBlockModels: customBlockModelsSwitch.checked
                 }
