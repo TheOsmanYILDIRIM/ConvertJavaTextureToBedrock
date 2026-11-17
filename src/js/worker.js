@@ -91,12 +91,29 @@ async function buildAddon(outputFs, files) {
 }
 
 addEventListener("message", async e => {
+    const start = performance.now();
+    let pending = [], timer = null;
+    const elapsed = () => Math.round(performance.now() - start);
+    const flush = () => {
+        clearTimeout(timer);
+        timer = null;
+        if (!pending.length) return;
+        postMessage({ logs: pending });
+        pending = [];
+    };
+    const record = (message, color) => {
+        pending.push({ elapsedMs: elapsed(), message: String(message), color });
+        if (pending.length >= 128) flush();
+        else if (timer === null) timer = setTimeout(flush, 250);
+    };
     try {
         const { files, options } = e.data;
+        record("Conversion requested (worker)");
+        record("Options: " + JSON.stringify(options));
         const outputFs = new FileOutput();
         const log = new class extends AbstractLog {
             log(log, log_color_class = undefined) {
-                postMessage({ log, log_color_class });
+                record(log, log_color_class);
             }
 
             warn(log) {
@@ -118,6 +135,8 @@ addEventListener("message", async e => {
         const addon = await buildAddon(outputFs, files);
         if (addon !== null) {
             log.log("Custom Java block models detected: output packaged as Bedrock .mcaddon (Resource Pack + companion Behavior Pack)");
+            record("Output ready");
+            flush();
             postMessage({ output: addon });
             return;
         }
@@ -125,10 +144,14 @@ addEventListener("message", async e => {
         const data = (typeof File !== "undefined" && converted instanceof File)
             ? converted
             : (converted?.data || converted);
-        postMessage({ output: downloadable(data, sourceBaseName(files) + ".mcpack") });
+        const output = downloadable(data, sourceBaseName(files) + ".mcpack");
+        record("Output ready");
+        flush();
+        postMessage({ output });
     } catch (err) {
-        setTimeout(() => {
-            throw err;
-        });
+        record("ERROR: " + (err?.message ?? String(err)), "red");
+        if (err?.stack) record(err.stack, "red");
+        flush();
+        postMessage({ failure: true });
     }
 });

@@ -57,8 +57,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let worker = null;
 
-    const logs = document.createElement("ul");
-    logs.classList.add("log");
+    const logs = document.createElement("div");
+    const status = document.createElement("p");
+    status.setAttribute("role", "status");
+    const downloadLog = document.createElement("button");
+    downloadLog.type = "button";
+    downloadLog.className = "swal-button";
+    downloadLog.textContent = "Download detailed log";
+    logs.append(status, downloadLog);
+    let logLines = [], startedAt = 0, sourceName = "converted-pack", warnings = 0;
+    const seconds = ms => (ms / 1000).toFixed(3) + " s";
+    downloadLog.addEventListener("click", () => {
+        const body = [`Started: ${new Date(startedAt).toISOString()}`, "", ...logLines, ""].join("\n");
+        fileSaver(new Blob([body], { type: "text/plain;charset=utf-8" }), sourceName + "-conversion.log.txt");
+    });
 
     /**
      * @param {string} message
@@ -106,7 +118,15 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        logs.innerHTML = "";
+        logLines = [];
+        warnings = 0;
+        appendLogBatch.lastMs = 0;
+        startedAt = Date.now();
+        const first = files[0];
+        sourceName = (first.webkitRelativePath?.split("/")[0] || first.name || "converted-pack")
+            .replace(/\.(zip|mcpack|mcaddon)$/i, "").replace(/[^\w.-]/g, "_") || "converted-pack";
+        status.textContent = "Starting conversion…";
+        downloadLog.disabled = true;
 
         swal({
             title: "Conversion in progress",
@@ -175,12 +195,16 @@ document.addEventListener("DOMContentLoaded", () => {
      * @returns {Promise<>}
      */
     async function afterConvert(e) {
-        const { log, log_color_class, output } = e.data;
-
-        if (log) {
-            _log(log, log_color_class);
+        if (e.currentTarget !== worker) return;
+        const { logs: batch, output, failure } = e.data;
+        if (Array.isArray(batch)) {
+            appendLogBatch(batch);
             return;
         }
+        if (failure) return errorConvert();
+        if (!output) return;
+        worker.terminate();
+        worker = null;
 
         // Allow select same file again
         selectInputFileButton.value = selectInputFolderButton.value = "";
@@ -193,7 +217,7 @@ document.addEventListener("DOMContentLoaded", () => {
             buttons: "Save"
         });
 
-        _log();
+        status.textContent = "Output ready · " + status.textContent.split(" · ").slice(1).join(" · ");
 
         if (await savePopup) {
             if (output instanceof File) {
@@ -209,35 +233,34 @@ document.addEventListener("DOMContentLoaded", () => {
      * @param {ErrorEvent} err
      */
     function errorConvert(err) {
-        // Allow select same file again
+        if (err?.currentTarget && err.currentTarget !== worker) return;
+        if (worker) worker.terminate();
+        worker = null;
         selectInputFileButton.value = selectInputFolderButton.value = "";
-
-        swal({
-            title: "Conversion failed",
-            content: logs,
-            icon: "error"
-        });
-
-        _log(`ERROR: ${err.message}`, "red");
+        if (err) {
+            logLines.push("UI/worker startup error: " + (err.message ?? String(err)));
+            downloadLog.disabled = false;
+        }
+        status.textContent = "Conversion failed. See the detailed log.";
+        swal({ title: "Conversion failed", content: logs, icon: "error" });
     }
 
-    /**
-     * @param {string|undefined} log
-     * @param {string|undefined} log_color_class
-     */
-    function _log(log = undefined, log_color_class = undefined) {
-        if (log) {
-            const li = document.createElement("li");
-
-            li.innerText = log;
-
-            if (log_color_class) {
-                li.classList.add(`${log_color_class}-text`, "text-darken-3");
-            }
-
-            logs.appendChild(li);
+    function appendLogBatch(batch) {
+        let stage = "";
+        for (const { elapsedMs, message } of batch) {
+            const delta = elapsedMs - (appendLogBatch.lastMs ?? 0);
+            appendLogBatch.lastMs = elapsedMs;
+            logLines.push(`[+${seconds(elapsedMs)} | Δ ${seconds(delta)}] ${message}`);
+            if (message.startsWith("WARNING:")) warnings++;
+            if (/^(Start conversion|Read zip|Create metadata|Generate (Blob|File) zip|Conversion finished|Output ready)/.test(message)) stage = message;
         }
-
-        logs.scrollTop = logs.scrollHeight; // Scroll to bottom
+        if (batch.length) {
+            if (!stage) {
+                const last = batch[batch.length - 1].message;
+                stage = /OptiFine|CTM/.test(last) ? "Converting connected textures" : "Processing pack";
+            }
+            status.textContent = `${stage} · ${seconds(appendLogBatch.lastMs)} · ${warnings} warnings`;
+            downloadLog.disabled = false;
+        }
     }
 });

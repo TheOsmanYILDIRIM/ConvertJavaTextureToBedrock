@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 env:
-  API_REVISION: 9aa023431ffb4512137af6a57c9fb8054949e332
+  API_REVISION: 4b32862e3a797ad40a010c252b2d781c91bf36d2
 
 concurrency:
   group: web-pages-${{ github.ref }}
@@ -69,7 +69,8 @@ jobs:
           grep -R -q "Custom Java block models detected" build/worker.*.js
           grep -R -q "j2b_companion/blocks/" build/worker.*.js
           grep -Fq -- "includeMaterialMapsSwitch" build/index.html
-          grep -Fq -- "cells passed the edge check" build/worker.*.js
+          grep -Fq -- "Conversion requested (worker)" build/worker.*.js
+          ! grep -Fq -- "cells passed the edge check" build/worker.*.js
           echo "Verified Java 26.3 browser bundle and CTM material control."
 
       - uses: actions/upload-artifact@v4
