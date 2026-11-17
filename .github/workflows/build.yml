@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - experiment/custom-models-safe-worldgen
   pull_request:
     branches:
       - main
@@ -13,7 +14,7 @@ permissions:
   contents: read
 
 env:
-  API_REVISION: 18d315a1d93b829c93982292531e8d433c432abd
+  API_REVISION: c95a03cb54f2aa2499691107fabd50663ed88fe4
 
 concurrency:
   group: web-pages-${{ github.ref }}
@@ -52,6 +53,9 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
+      - name: Test pinned API custom models
+        run: node --test node_modules/@modifiedcommand/convert-minecraft-java-texture-to-bedrock-api/test/companion/oak-worldgen.test.mjs
+
       - name: Build
         run: yarn build
         env:
@@ -68,6 +72,8 @@ jobs:
           grep -Fq -- "overlay connection conditions cannot be baked unconditionally" build/worker.*.js
           grep -R -q "Custom Java block models detected" build/worker.*.js
           grep -R -q "j2b_companion/blocks/" build/worker.*.js
+          grep -Fq -- "J2B_Oak_Worldgen_Probe.mcpack" build/worker.*.js
+          grep -Fq -- "customBlockModelsWarning" build/index.html
           grep -Fq -- "includeMaterialMapsSwitch" build/index.html
           grep -Fq -- "Conversion requested (worker)" build/worker.*.js
           ! grep -Fq -- "cells passed the edge check" build/worker.*.js

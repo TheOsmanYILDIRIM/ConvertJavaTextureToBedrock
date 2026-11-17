@@ -47,7 +47,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const experimentalSwitch = bindRememberedSwitch("experimentalSwitch");
     const optifineRandomBlockVariantsSwitch = bindRememberedSwitch("optifineRandomBlockVariantsSwitch");
     const includeMaterialMapsSwitch = bindRememberedSwitch("includeMaterialMapsSwitch", true);
-    const customBlockModelsSwitch = bindRememberedSwitch("customBlockModelsSwitch");
+    const customBlockModelsSwitch = document.getElementById("customBlockModelsSwitch");
+    customBlockModelsSwitch.checked = false;
+    const tr = (navigator.language || "").toLowerCase().startsWith("tr");
+    if (tr) document.getElementById("customBlockModelsLabel").textContent = "Java özel blok modelleri → Bedrock .mcaddon";
+    const customModelWarning = tr
+        ? "Deneysel: Bu paket özel blok kimlikleri ekler. Paketi kapatmak blokları geri yüklemez. Yalnızca yedeklenmiş veya gözden çıkarılabilir dünyalarda kullan."
+        : "Experimental: this add-on adds custom block IDs. Disabling it does not restore blocks. Use only a backup or a disposable world.";
+    document.getElementById("customBlockModelsWarning").textContent = customModelWarning;
 
     const main = document.querySelector("main");
     main.addEventListener("dragenter", startConvertDrop);
@@ -125,6 +132,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const first = files[0];
         sourceName = (first.webkitRelativePath?.split("/")[0] || first.name || "converted-pack")
             .replace(/\.(zip|mcpack|mcaddon)$/i, "").replace(/[^\w.-]/g, "_") || "converted-pack";
+        const customBlockModels = customBlockModelsSwitch.checked;
+        if (customBlockModels && !window.confirm(customModelWarning)) return;
         status.textContent = "Starting conversion…";
         downloadLog.disabled = true;
 
@@ -156,7 +165,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     experimental: experimentalSwitch.checked,
                     includeMaterialMaps: includeMaterialMapsSwitch.checked,
                     optifineRandomBlockVariants: optifineRandomBlockVariantsSwitch.checked,
-                    customBlockModels: customBlockModelsSwitch.checked
+                    customBlockModels
                 }
             });
         } catch (err) {

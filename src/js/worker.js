@@ -1,5 +1,5 @@
 import { AbstractLog, ArrayInput, FileInputEntry, FileOutput } from "@modifiedcommand/convert-base-api";
-import { ConvertJavaTextureToBedrockApi } from "@modifiedcommand/convert-minecraft-java-texture-to-bedrock-api";
+import { ConvertJavaTextureToBedrockApi, buildOakWorldgenProbe } from "@modifiedcommand/convert-minecraft-java-texture-to-bedrock-api";
 import JSZip from "jszip";
 import v4 from "uuid/v4.js";
 
@@ -18,7 +18,7 @@ function downloadable(data, name) {
     return { data, name };
 }
 
-async function buildAddon(outputFs, files) {
+async function buildAddon(outputFs, files, log) {
     const zip = outputFs.zip;
     const stagedBlocks = Object.keys(zip.files)
         .filter(name => name.startsWith("j2b_companion/blocks/") && name.endsWith(".json") && !zip.files[name].dir);
@@ -38,10 +38,6 @@ async function buildAddon(outputFs, files) {
 
     resourceManifest.header.pack_scope = "world";
     resourceManifest.header.min_engine_version = [1, 21, 80];
-    resourceManifest.dependencies = [
-        ...(Array.isArray(resourceManifest.dependencies) ? resourceManifest.dependencies : []),
-        { uuid: behaviorHeaderUuid, version: [0, 0, 1] }
-    ];
 
     const behaviorManifest = {
         format_version: 2,
@@ -64,22 +60,51 @@ async function buildAddon(outputFs, files) {
     };
 
     const addon = new JSZip();
-    for (const [name, entry] of Object.entries(zip.files)) {
-        if (entry.dir) continue;
-
-        if (name.startsWith("j2b_companion/")) {
-            const relative = name.slice("j2b_companion/".length);
-            if (relative) addon.file("J2B_BP/" + relative, await entry.async("uint8array"));
-            continue;
-        }
-
-        if (name === "manifest.json") {
-            addon.file("J2B_RP/manifest.json", JSON.stringify(resourceManifest, null, 2));
-        } else {
-            addon.file("J2B_RP/" + name, await entry.async("uint8array"));
-        }
+    const resources = new JSZip();
+    const behavior = new JSZip();
+    const compression = { type: "uint8array", compression: "DEFLATE" };
+    const stagedIds = new Set();
+    for (const name of stagedBlocks) {
+        const data = JSON.parse(await zip.file(name).async("string"));
+        const id = data["minecraft:block"]?.description?.identifier;
+        if (typeof id !== "string" || stagedIds.has(id)) throw new Error("Invalid companion block identifier");
+        stagedIds.add(id);
+        behavior.file(name.slice("j2b_companion/".length), JSON.stringify(data));
     }
-    addon.file("J2B_BP/manifest.json", JSON.stringify(behaviorManifest, null, 2));
+    for (const [name, entry] of Object.entries(zip.files)) {
+        if (entry.dir || name.startsWith("j2b_companion/") || name === "manifest.json") continue;
+        resources.file(name, await entry.async("uint8array"));
+    }
+    resources.file("manifest.json", JSON.stringify(resourceManifest, null, 2));
+    behavior.file("manifest.json", JSON.stringify(behaviorManifest, null, 2));
+    addon.file("J2B_RP.mcpack", await resources.generateAsync(compression));
+    addon.file("J2B_BP.mcpack", await behavior.generateAsync(compression));
+
+    const report = zip.file("j2b_custom_blocks.json");
+    const mapping = report ? JSON.parse(await report.async("string")).mappings : [];
+    const probe = buildOakWorldgenProbe(Array.isArray(mapping) ? mapping : [], stagedIds);
+    if (probe) {
+        const worldgen = new JSZip();
+        worldgen.file("manifest.json", JSON.stringify({
+            format_version: 2,
+            header: {
+                name: "pack.name", description: "pack.description",
+                uuid: v4(), version: [0, 0, 1], min_engine_version: [1, 21, 80]
+            },
+            modules: [{ type: "data", uuid: v4(), version: [0, 0, 1] }],
+            dependencies: [{ uuid: behaviorHeaderUuid, version: [0, 0, 1] }]
+        }, null, 2));
+        worldgen.file("texts/languages.json", JSON.stringify(["en_US", "tr_TR"]));
+        worldgen.file("texts/en_US.lang",
+            "pack.name=J2B Custom Models: Oak Worldgen Probe\npack.description=Disposable worlds only. Disabling this pack does not restore blocks.\n");
+        worldgen.file("texts/tr_TR.lang",
+            "pack.name=J2B Özel Modeller: Meşe Dünya Üretimi Testi\npack.description=Yalnızca deneme dünyalarında kullan. Kapatmak blokları geri getirmez.\n");
+        worldgen.file(probe.path, JSON.stringify(probe.feature, null, 2));
+        addon.file("J2B_Oak_Worldgen_Probe.mcpack", await worldgen.generateAsync(compression));
+        log.warn("Oak worldgen probe included. Activate only in a disposable world; removal is not certified.");
+    } else {
+        log.warn("No eligible single-model oak canopy; generated models do not alter world generation.");
+    }
 
     const blob = await addon.generateAsync({
         type: "blob",
@@ -128,11 +153,11 @@ addEventListener("message", async e => {
             log,
             {
                 ...options,
-                keepCompanionStaging: true
+                keepCompanionStaging: options.customBlockModels === true
             }
         ).convert();
 
-        const addon = await buildAddon(outputFs, files);
+        const addon = options.customBlockModels === true ? await buildAddon(outputFs, files, log) : null;
         if (addon !== null) {
             log.log("Custom Java block models detected: output packaged as Bedrock .mcaddon (Resource Pack + companion Behavior Pack)");
             record("Output ready");
