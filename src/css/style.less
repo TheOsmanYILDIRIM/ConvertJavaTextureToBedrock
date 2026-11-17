@@ -6,7 +6,7 @@ body {
   .black-text;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  min-height: 100%;
 }
 
 main {
@@ -17,7 +17,7 @@ main {
   border-style: dashed;
   border-width: 5px;
   display: flex;
-  flex-grow: 1;
+  flex: 1 0 auto;
   justify-content: center;
   min-height: 100px;
 
@@ -193,8 +193,63 @@ body {
   background-color: #795548 !important;
 }
 
-nav .nav-title {
-  margin: 0px 28px;
+header,
+footer {
+  flex-shrink: 0;
+}
+
+header .row {
+  margin: 0;
+}
+
+header nav.nav-extended .nav-content {
+  height: auto;
+}
+
+header nav.nav-extended .nav-title {
+  display: block;
+  font-size: clamp(1.5rem, 5vw, 2.25rem);
+  line-height: 1.2;
+  margin: 0;
+  overflow-wrap: anywhere;
+  padding: 20px 12px;
+  position: static;
+}
+
+.conversion-options {
+  max-width: 100%;
+  width: 100%;
+}
+
+.conversion-options .switch label {
+  align-items: center;
+  color: inherit;
+  display: flex;
+  font-size: 1rem;
+  gap: 12px;
+  line-height: 1.4;
+  min-height: 44px;
+}
+
+.conversion-options .switch label .lever {
+  flex: 0 0 auto;
+  margin: 0 6px 0 0;
+}
+
+.conversion-options .option-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.conversion-options .switch input[type="checkbox"]:focus-visible + .lever {
+  outline: 2px solid currentColor;
+  outline-offset: 5px;
+}
+
+@media (max-width: 768px) {
+  .upload-row .upload-hint {
+    flex-basis: 100%;
+  }
 }
 
 nav.nav-extended {
