@@ -54,7 +54,7 @@ jobs:
         run: yarn install
 
       - name: Test pinned API custom models and modern atlases
-        run: |\n          node --test node_modules/@modifiedcommand/convert-minecraft-java-texture-to-bedrock-api/test/companion/oak-worldgen.test.mjs\n          node --test node_modules/@modifiedcommand/convert-minecraft-java-texture-to-bedrock-api/test/converter/modern-atlases.test.mjs
+        run: node --test node_modules/@modifiedcommand/convert-minecraft-java-texture-to-bedrock-api/test/companion/oak-worldgen.test.mjs && node --test node_modules/@modifiedcommand/convert-minecraft-java-texture-to-bedrock-api/test/converter/modern-atlases.test.mjs
 
       - name: Build
         run: yarn build
