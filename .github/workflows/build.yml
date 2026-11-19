@@ -14,7 +14,7 @@ permissions:
   contents: read
 
 env:
-  API_REVISION: c95a03cb54f2aa2499691107fabd50663ed88fe4
+  API_REVISION: 2bfe704296af1468bb92075da8b23db394061304
 
 concurrency:
   group: web-pages-${{ github.ref }}
@@ -53,8 +53,8 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
-      - name: Test pinned API custom models
-        run: node --test node_modules/@modifiedcommand/convert-minecraft-java-texture-to-bedrock-api/test/companion/oak-worldgen.test.mjs
+      - name: Test pinned API custom models and modern atlases
+        run: |\n          node --test node_modules/@modifiedcommand/convert-minecraft-java-texture-to-bedrock-api/test/companion/oak-worldgen.test.mjs\n          node --test node_modules/@modifiedcommand/convert-minecraft-java-texture-to-bedrock-api/test/converter/modern-atlases.test.mjs
 
       - name: Build
         run: yarn build
