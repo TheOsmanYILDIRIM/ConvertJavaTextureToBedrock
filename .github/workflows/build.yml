@@ -14,7 +14,7 @@ permissions:
   contents: read
 
 env:
-  API_REVISION: 2bfe704296af1468bb92075da8b23db394061304
+  API_REVISION: ffaebd539cd71c735934f2eecdd861410942a7ea
 
 concurrency:
   group: web-pages-${{ github.ref }}
